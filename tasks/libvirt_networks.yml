@@ -1,0 +1,26 @@
+---
+- name: Ensure libvirt bridge network is defined
+  tags: [libvirt_setup, libvirt_bridge, libvirt_networks]
+  virt_net:
+    name: "{{ net_name }}"
+    command: define
+    xml: '{{ (lookup("template", "../templates/libvirt_net_bridge.xml.j2")) }}'
+  when: net_create|bool and net_mode == 'bridge'
+
+- name: get list of libvirt networks
+  tags: [libvirt_setup, libvirt_networks]
+  virt_net:
+    command: list_nets
+  register: libvirt_nets
+
+- name: ensure {{ net_name }} is active
+  when: net_name in libvirt_nets.list_nets
+  virt_net:
+    name: "{{ net_name }}"
+    state: active
+    
+- name: ensure {{ net_name }} is started on boot
+  when: net_name in libvirt_nets.list_nets
+  virt_net:
+    name: "{{ net_name }}"
+    autostart: yes
